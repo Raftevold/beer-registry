@@ -3,6 +3,7 @@ import { Beer, Division, BeerNote } from './types/beer'
 import { BeerCard } from './components/BeerCard'
 import { BeerForm } from './components/BeerForm'
 import { StatsDashboard } from './components/StatsDashboard'
+import { LoginPage } from './components/LoginPage'
 import { Dialog } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { db } from './firebase/config'
@@ -10,6 +11,10 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } fro
 import './App.css'
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
+  
   const [selectedDivision, setSelectedDivision] = useState<Division>('Otterdal Bryggeri')
   const [beers, setBeers] = useState<Beer[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -114,6 +119,15 @@ function App() {
     setBeers(prev => prev.filter(beer => beer.id !== id));
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm">
@@ -123,6 +137,14 @@ function App() {
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-bold text-gray-900">Bryggeri Registeret</h1>
               </div>
+            </div>
+            <div className="flex items-center">
+              <button
+                onClick={handleLogout}
+                className="ml-4 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+              >
+                Logg ut
+              </button>
             </div>
           </div>
         </div>
