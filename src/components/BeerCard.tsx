@@ -13,9 +13,13 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
   
-  const daysInProduction = Math.ceil(
-    (new Date().getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24)
-  );
+  const daysInProduction = beer.status === 'Ready' && beer.completionDate
+    ? Math.ceil((beer.completionDate.getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24))
+    : Math.ceil((new Date().getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24));
+
+  const productionTimeText = beer.status === 'Ready' 
+    ? `Produksjonstid: ${daysInProduction} dager` 
+    : `Dager i produksjon: ${daysInProduction}`;
 
   return (
     <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow">
@@ -42,8 +46,13 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
           Brew Date: {beer.brewDate.toLocaleDateString()}
         </p>
         <p className="text-sm text-gray-600">
-          Days in Production: {daysInProduction}
+          {productionTimeText}
         </p>
+        {beer.completionDate && (
+          <p className="text-sm text-gray-600">
+            Ferdig dato: {beer.completionDate.toLocaleDateString()}
+          </p>
+        )}
         {beer.description && (
           <p className="text-sm text-gray-600">{beer.description}</p>
         )}
@@ -90,7 +99,7 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
                       <span className="mx-2">•</span>
                       <span>{malt.amount}kg</span>
                       <span className="mx-2">•</span>
-                      <span className="text-gray-500">Batch #{malt.batchNumber}</span>
+                      <span className="text-gray-500">Sporing #{malt.batchNumber}</span>
                       {malt.supplier && (
                         <>
                           <span className="mx-2">•</span>
@@ -118,7 +127,7 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
                       <span className="mx-2">•</span>
                       <span>{hop.timing}min</span>
                       <span className="mx-2">•</span>
-                      <span className="text-gray-500">Batch #{hop.batchNumber}</span>
+                      <span className="text-gray-500">Sporing #{hop.batchNumber}</span>
                       {hop.supplier && (
                         <>
                           <span className="mx-2">•</span>

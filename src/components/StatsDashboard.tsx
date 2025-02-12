@@ -32,9 +32,9 @@ export function StatsDashboard({ beers, division }: StatsDashboardProps) {
     totalVolume: beers.reduce((sum, beer) => sum + beer.batchSize, 0),
     averageProductionDays: Math.round(
       beers.reduce((sum, beer) => {
-        const days = Math.ceil(
-          (new Date().getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24)
-        );
+        const days = beer.status === 'Ready' && beer.completionDate
+          ? Math.ceil((beer.completionDate.getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24))
+          : Math.ceil((new Date().getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24));
         return sum + days;
       }, 0) / beers.length || 0
     ),

@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Beer, Division, BeerNote } from './types/beer'
 import { BeerCard } from './components/BeerCard'
 import { BeerForm } from './components/BeerForm'
 import { StatsDashboard } from './components/StatsDashboard'
 import { Dialog } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { db } from './firebase/config'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore'
 import './App.css'
 
 function App() {
@@ -15,6 +17,28 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<Beer['status'] | 'All'>('All')
 
+  useEffect(() => {
+    const loadBeers = async () => {
+      const beersCollection = collection(db, 'beers');
+      const beerSnapshot = await getDocs(beersCollection);
+      const loadedBeers = beerSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          brewDate: data.brewDate.toDate(),
+          completionDate: data.completionDate?.toDate(),
+          notes: data.notes.map((note: any) => ({
+            ...note,
+            date: note.date.toDate()
+          }))
+        } as Beer;
+      });
+      setBeers(loadedBeers);
+    };
+    loadBeers();
+  }, []);
+
   const filteredBeers = beers
     .filter(beer => beer.division === selectedDivision)
     .filter(beer => 
@@ -23,41 +47,72 @@ function App() {
       beer.description?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .filter(beer => filterStatus === 'All' ? true : beer.status === filterStatus)
+    .sort((a, b) => b.brewDate.getTime() - a.brewDate.getTime())
 
-  const handleAddNote = (beerId: string, note: Omit<BeerNote, 'id'>) => {
-    setBeers(prev => prev.map(beer => {
-      if (beer.id === beerId) {
-        return {
-          ...beer,
-          notes: [...(beer.notes || []), { ...note, id: Date.now().toString() }]
-        };
-      }
-      return beer;
-    }));
+  const handleAddNote = async (beerId: string, note: Omit<BeerNote, 'id'>) => {
+    const beerRef = doc(db, 'beers', beerId);
+    const newNote = {
+      ...note,
+      id: Date.now().toString(),
+      date: Timestamp.fromDate(note.date)
+    };
+    const beer = beers.find(b => b.id === beerId);
+    if (beer) {
+      const updatedNotes = [...beer.notes, newNote];
+      await updateDoc(beerRef, { notes: updatedNotes });
+      setBeers(prev => prev.map(beer => {
+        if (beer.id === beerId) {
+          return {
+            ...beer,
+            notes: [...beer.notes, { ...newNote, date: note.date }]
+          };
+        }
+        return beer;
+      }));
+    }
   };
 
-  const handleAddBeer = (beerData: Omit<Beer, 'id'>) => {
+  const handleAddBeer = async (beerData: Omit<Beer, 'id'>) => {
+    const beersCollection = collection(db, 'beers');
+    const docRef = await addDoc(beersCollection, {
+      ...beerData,
+      brewDate: Timestamp.fromDate(beerData.brewDate),
+      completionDate: beerData.completionDate ? Timestamp.fromDate(beerData.completionDate) : null,
+      notes: []
+    });
     const newBeer = {
       ...beerData,
-      id: Date.now().toString(),
+      id: docRef.id,
       notes: []
-    }
-    setBeers(prev => [...prev, newBeer])
-    setIsFormOpen(false)
-  }
+    };
+    setBeers(prev => [...prev, newBeer]);
+    setIsFormOpen(false);
+  };
 
-  const handleEditBeer = (beerData: Omit<Beer, 'id'>) => {
-    if (!editingBeer) return
+  const handleEditBeer = async (beerData: Omit<Beer, 'id'>) => {
+    if (!editingBeer) return;
+    const beerRef = doc(db, 'beers', editingBeer.id);
+    
+    // Convert dates to Firestore Timestamps
+    const updateData = {
+      ...beerData,
+      brewDate: Timestamp.fromDate(beerData.brewDate),
+      completionDate: beerData.completionDate ? Timestamp.fromDate(beerData.completionDate) : null
+    };
+    
+    await updateDoc(beerRef, updateData);
     setBeers(prev => prev.map(beer => 
       beer.id === editingBeer.id ? { ...beerData, id: beer.id } : beer
-    ))
-    setIsFormOpen(false)
-    setEditingBeer(undefined)
-  }
+    ));
+    setIsFormOpen(false);
+    setEditingBeer(undefined);
+  };
 
-  const handleDeleteBeer = (id: string) => {
-    setBeers(prev => prev.filter(beer => beer.id !== id))
-  }
+  const handleDeleteBeer = async (id: string) => {
+    const beerRef = doc(db, 'beers', id);
+    await deleteDoc(beerRef);
+    setBeers(prev => prev.filter(beer => beer.id !== id));
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -183,20 +238,24 @@ function App() {
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-xl bg-white rounded-xl p-6 w-full">
-            <Dialog.Title className="text-lg font-medium mb-4">
-              {editingBeer ? 'Rediger brygg' : 'Registrer nytt brygg'}
-            </Dialog.Title>
+          <Dialog.Panel className="mx-auto max-w-xl bg-white rounded-xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b">
+              <Dialog.Title className="text-lg font-medium">
+                {editingBeer ? 'Rediger brygg' : 'Registrer nytt brygg'}
+              </Dialog.Title>
+            </div>
             
-            <BeerForm
-              onSubmit={editingBeer ? handleEditBeer : handleAddBeer}
-              onCancel={() => {
-                setIsFormOpen(false)
-                setEditingBeer(undefined)
-              }}
-              initialBeer={editingBeer}
-              division={selectedDivision}
-            />
+            <div className="p-6 overflow-y-auto flex-1">
+              <BeerForm
+                onSubmit={editingBeer ? handleEditBeer : handleAddBeer}
+                onCancel={() => {
+                  setIsFormOpen(false)
+                  setEditingBeer(undefined)
+                }}
+                initialBeer={editingBeer}
+                division={selectedDivision}
+              />
+            </div>
           </Dialog.Panel>
         </div>
       </Dialog>

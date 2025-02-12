@@ -16,6 +16,7 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
     originalGravity: 1.050,
     finalGravity: 1.010,
     brewDate: new Date().toISOString().split('T')[0],
+    completionDate: '',
     description: '',
     batchSize: 20,
     status: 'Planning' as Beer['status']
@@ -32,6 +33,9 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         originalGravity: initialBeer.originalGravity,
         finalGravity: initialBeer.finalGravity,
         brewDate: new Date(initialBeer.brewDate).toISOString().split('T')[0],
+        completionDate: initialBeer.completionDate 
+          ? new Date(initialBeer.completionDate).toISOString().split('T')[0]
+          : '',
         description: initialBeer.description || '',
         batchSize: initialBeer.batchSize,
         status: initialBeer.status
@@ -44,10 +48,17 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const abv = calculateABV(formData.originalGravity, formData.finalGravity);
+    
+    // Set completion date based on status and form input
+    const completionDate = formData.status === 'Ready' 
+      ? (formData.completionDate ? new Date(formData.completionDate) : new Date())
+      : undefined;
+
     onSubmit({
       ...formData,
       abv,
       brewDate: new Date(formData.brewDate),
+      completionDate,
       division,
       notes: initialBeer?.notes || [],
       ingredients: {
@@ -62,8 +73,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
       {/* Basic Info Section */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Navn</label>
+          <label htmlFor="beer-name" className="block text-sm font-medium text-gray-700">Navn</label>
           <input
+            id="beer-name"
+            name="beer-name"
             type="text"
             required
             value={formData.name}
@@ -73,8 +86,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Stil</label>
+          <label htmlFor="beer-style" className="block text-sm font-medium text-gray-700">Stil</label>
           <input
+            id="beer-style"
+            name="beer-style"
             type="text"
             required
             value={formData.style}
@@ -85,8 +100,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Original Gravity (OG)</label>
+            <label htmlFor="original-gravity" className="block text-sm font-medium text-gray-700">Original Gravity (OG)</label>
             <input
+              id="original-gravity"
+              name="original-gravity"
               type="number"
               step="0.001"
               min="1.000"
@@ -99,8 +116,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Final Gravity (FG)</label>
+            <label htmlFor="final-gravity" className="block text-sm font-medium text-gray-700">Final Gravity (FG)</label>
             <input
+              id="final-gravity"
+              name="final-gravity"
               type="number"
               step="0.001"
               min="0.995"
@@ -120,8 +139,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Batch Størrelse (L)</label>
+          <label htmlFor="batch-size" className="block text-sm font-medium text-gray-700">Batch Størrelse (L)</label>
           <input
+            id="batch-size"
+            name="batch-size"
             type="number"
             required
             value={formData.batchSize}
@@ -131,8 +152,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Bryggedato</label>
+          <label htmlFor="brew-date" className="block text-sm font-medium text-gray-700">Bryggedato</label>
           <input
+            id="brew-date"
+            name="brew-date"
             type="date"
             required
             value={formData.brewDate}
@@ -142,8 +165,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <label htmlFor="beer-status" className="block text-sm font-medium text-gray-700">Status</label>
           <select
+            id="beer-status"
+            name="beer-status"
             value={formData.status}
             onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as Beer['status'] }))}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -156,9 +181,29 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
           </select>
         </div>
 
+        {formData.status === 'Ready' && (
+          <div>
+            <label htmlFor="completion-date" className="block text-sm font-medium text-gray-700">Ferdig dato</label>
+            <input
+              id="completion-date"
+              name="completion-date"
+              type="date"
+              value={formData.completionDate}
+              onChange={(e) => setFormData(prev => ({ ...prev, completionDate: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              max={new Date().toISOString().split('T')[0]}
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Om ferdig dato ikke er satt, vil dagens dato bli brukt
+            </p>
+          </div>
+        )}
+
         <div>
-          <label className="block text-sm font-medium text-gray-700">Beskrivelse</label>
+          <label htmlFor="beer-description" className="block text-sm font-medium text-gray-700">Beskrivelse</label>
           <textarea
+            id="beer-description"
+            name="beer-description"
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             rows={3}
