@@ -81,7 +81,12 @@ node_modules/
 *.sln
 *.sw?
 
-node_modules
-dist
-dist-ssr
+# Build output
+dist/
+dist-ssr/
 *.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
