@@ -4,6 +4,7 @@ import { BeerCard } from './components/BeerCard'
 import { BeerForm } from './components/BeerForm'
 import { StatsDashboard } from './components/StatsDashboard'
 import { LoginPage } from './components/LoginPage'
+import { ExportModal } from './components/ExportModal'
 import { Dialog } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { db } from './firebase/config'
@@ -21,6 +22,7 @@ function App() {
   const [editingBeer, setEditingBeer] = useState<Beer | undefined>()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<Beer['status'] | 'All'>('All')
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   useEffect(() => {
     const loadBeers = async () => {
@@ -33,6 +35,7 @@ function App() {
           id: doc.id,
           brewDate: data.brewDate.toDate(),
           completionDate: data.completionDate?.toDate(),
+          bestBeforeDate: data.bestBeforeDate?.toDate(),
           notes: data.notes.map((note: any) => ({
             ...note,
             date: note.date.toDate()
@@ -154,7 +157,7 @@ function App() {
         <main>
           <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {/* Division Selector */}
-            <div className="mb-8">
+            <div className="mb-8 flex justify-between items-center">
               <div className="flex space-x-4">
                 {['Otterdal Bryggeri', 'Johans Pub'].map((division) => (
                   <button
@@ -170,6 +173,12 @@ function App() {
                   </button>
                 ))}
               </div>
+              <button
+                onClick={() => setIsExportModalOpen(true)}
+                className="px-4 py-2 rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+              >
+                Eksporter Brygg
+              </button>
             </div>
 
             {/* Stats Dashboard */}
@@ -281,8 +290,15 @@ function App() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
+      {/* Export Modal */}
+      <ExportModal 
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        beers={filteredBeers}
+      />
     </div>
-  )
+  );
 }
 
 export default App
