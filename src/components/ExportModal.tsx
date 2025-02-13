@@ -163,7 +163,7 @@ const BeerReport = ({ beer }: { beer: Beer }) => (
           ))}
         </View>
 
-        <View>
+        <View style={{ marginBottom: 12 }}>
           <Text style={styles.label}>Gjær</Text>
           {beer.ingredients.yeast.map((yeast: YeastIngredient, index: number) => (
             <Text key={index} style={[styles.ingredientItem, styles.ingredientList]}>
@@ -173,6 +173,15 @@ const BeerReport = ({ beer }: { beer: Beer }) => (
             </Text>
           ))}
         </View>
+
+        {beer.allergens && (
+          <View>
+            <Text style={styles.label}>Allergener</Text>
+            <Text style={[styles.ingredientItem, styles.ingredientList]}>
+              • {beer.allergens}
+            </Text>
+          </View>
+        )}
       </View>
 
       {beer.notes.length > 0 && (

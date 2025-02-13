@@ -174,6 +174,16 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
                 </div>
               </div>
             )}
+
+            {/* Allergens */}
+            {beer.allergens && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Allergener</h4>
+                <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  {beer.allergens}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -20,7 +20,8 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
     bestBeforeDate: '',
     description: '',
     batchSize: 20,
-    status: 'Planning' as Beer['status']
+    status: 'Planning' as Beer['status'],
+    allergens: ''
   });
 
   const [malts, setMalts] = useState<MaltIngredient[]>([]);
@@ -51,7 +52,8 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         bestBeforeDate: getBestBeforeDate(initialBeer.bestBeforeDate),
         description: initialBeer.description || '',
         batchSize: initialBeer.batchSize,
-        status: initialBeer.status
+        status: initialBeer.status,
+        allergens: initialBeer.allergens || ''
       });
       setMalts(initialBeer.ingredients.malts);
       setHops(initialBeer.ingredients.hops);
@@ -80,7 +82,8 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         malts,
         hops,
         yeast
-      }
+      },
+      allergens: formData.allergens || undefined
     });
   };
 
@@ -252,6 +255,20 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
           onUpdateHops={setHops}
           onUpdateYeast={setYeast}
         />
+
+        <div className="mt-4">
+          <label htmlFor="allergens" className="block text-sm font-medium text-gray-700">Allergener</label>
+          <input
+            id="allergens"
+            name="allergens"
+            type="text"
+            value={formData.allergens}
+            onChange={(e) => setFormData(prev => ({ ...prev, allergens: e.target.value }))}
+            placeholder="F.eks: Bygg, hvete, gluten, humle"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          />
+          <p className="mt-1 text-sm text-gray-500">Liste over allergener, separert med komma</p>
+        </div>
       </div>
 
       <div className="flex justify-end space-x-3">

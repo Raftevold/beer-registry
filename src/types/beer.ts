@@ -26,6 +26,7 @@ export interface Beer {
         hops: HopIngredient[];
         yeast: YeastIngredient[];
     };
+    allergens?: string; // Komma-separert liste over allergener
 }
 
 export interface MaltIngredient {
