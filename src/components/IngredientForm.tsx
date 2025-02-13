@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { MaltIngredient, HopIngredient } from '../types/beer';
+import { MaltIngredient, HopIngredient, YeastIngredient } from '../types/beer';
 
 interface IngredientFormProps {
   malts: MaltIngredient[];
   hops: HopIngredient[];
+  yeast: YeastIngredient[];
   onUpdateMalts: (malts: MaltIngredient[]) => void;
   onUpdateHops: (hops: HopIngredient[]) => void;
+  onUpdateYeast: (yeast: YeastIngredient[]) => void;
 }
 
-export function IngredientForm({ malts, hops, onUpdateMalts, onUpdateHops }: IngredientFormProps) {
+export function IngredientForm({ malts, hops, yeast, onUpdateMalts, onUpdateHops, onUpdateYeast }: IngredientFormProps) {
   const [newMalt, setNewMalt] = useState<Omit<MaltIngredient, 'id'>>({
     name: '',
     amount: 0,
@@ -23,6 +25,12 @@ export function IngredientForm({ malts, hops, onUpdateMalts, onUpdateHops }: Ing
     timing: 60,
     batchNumber: '',
     supplier: ''
+  });
+
+  const [newYeast, setNewYeast] = useState<Omit<YeastIngredient, 'id'>>({
+    type: '',
+    temperature: undefined as unknown as number,
+    batchNumber: ''
   });
 
   const handleAddMalt = (e: React.MouseEvent) => {
@@ -44,12 +52,23 @@ export function IngredientForm({ malts, hops, onUpdateMalts, onUpdateHops }: Ing
     });
   };
 
+  const handleAddYeast = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!newYeast.type || newYeast.temperature === undefined) return;
+    onUpdateYeast([...yeast, { ...newYeast, id: Date.now().toString() }]);
+    setNewYeast({ type: '', temperature: undefined as unknown as number, batchNumber: '' });
+  };
+
   const handleRemoveMalt = (id: string) => {
     onUpdateMalts(malts.filter(malt => malt.id !== id));
   };
 
   const handleRemoveHop = (id: string) => {
     onUpdateHops(hops.filter(hop => hop.id !== id));
+  };
+
+  const handleRemoveYeast = (id: string) => {
+    onUpdateYeast(yeast.filter(y => y.id !== id));
   };
 
   return (
@@ -220,6 +239,74 @@ export function IngredientForm({ malts, hops, onUpdateMalts, onUpdateHops }: Ing
             className="w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             min="0"
           />
+        </div>
+      </div>
+
+      {/* Yeast Section */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-900 mb-4">Gjær</h4>
+        
+        <div className="space-y-4">
+          {yeast.map(y => (
+            <div key={y.id} className="flex items-center gap-2 bg-gray-50 p-3 rounded-md">
+              <span className="flex-1">{y.type}</span>
+              <span>{y.temperature}°C</span>
+              <span className="text-sm text-gray-500">{y.batchNumber}</span>
+              <button
+                onClick={() => handleRemoveYeast(y.id)}
+                className="text-red-600 hover:text-red-800"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 grid grid-cols-4 gap-2">
+          <div>
+            <label htmlFor="yeast-type" className="sr-only">Gjærtype</label>
+            <input
+              type="text"
+              id="yeast-type"
+              name="yeast-type"
+              placeholder="Gjærtype"
+              value={newYeast.type}
+              onChange={e => setNewYeast(prev => ({ ...prev, type: e.target.value }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="yeast-temp" className="sr-only">Gjøringstemperatur (°C)</label>
+            <input
+              type="number"
+              id="yeast-temp"
+              name="yeast-temp"
+              placeholder="Temperatur"
+              onChange={e => setNewYeast(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              min="0"
+              step="0.1"
+            />
+          </div>
+          <div>
+            <label htmlFor="yeast-batch" className="sr-only">Sporing</label>
+            <input
+              type="text"
+              id="yeast-batch"
+              name="yeast-batch"
+              placeholder="Sporing"
+              value={newYeast.batchNumber}
+              onChange={e => setNewYeast(prev => ({ ...prev, batchNumber: e.target.value }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            onClick={handleAddYeast}
+            className="bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            aria-label="Legg til gjær"
+          >
+            Legg til
+          </button>
         </div>
       </div>
     </div>

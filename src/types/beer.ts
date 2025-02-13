@@ -1,3 +1,10 @@
+// Define a type for Firestore Timestamp-like objects
+export type TimestampLike = {
+  toDate(): Date;
+};
+
+export type DateOrTimestamp = Date | TimestampLike;
+
 export interface Beer {
     id: string;
     name: string;
@@ -5,8 +12,9 @@ export interface Beer {
     originalGravity: number;  // Specific gravity before fermentation (OG)
     finalGravity: number;     // Specific gravity after fermentation (FG)
     abv: number;              // Calculated from OG and FG
-    brewDate: Date;
-    completionDate?: Date;    // Date when the beer status changed to Ready
+    brewDate: DateOrTimestamp;
+    completionDate?: DateOrTimestamp;    // Date when the beer status changed to Ready
+    bestBeforeDate?: DateOrTimestamp;    // Best before date for the beer (Date or Firestore Timestamp)
     description?: string;
     division: 'Otterdal Bryggeri' | 'Johans Pub';
     batchSize: number;
@@ -15,6 +23,7 @@ export interface Beer {
     ingredients: {
         malts: MaltIngredient[];
         hops: HopIngredient[];
+        yeast: YeastIngredient[];
     };
 }
 
@@ -34,6 +43,13 @@ export interface HopIngredient {
     timing?: number; // minutes from end of boil (0 for dry hop)
     batchNumber?: string;
     supplier?: string;
+}
+
+export interface YeastIngredient {
+    id: string;
+    type: string;          // gjærtype
+    temperature: number;    // gjøringstemperatur
+    batchNumber?: string;  // sporing
 }
 
 export interface BeerNote {

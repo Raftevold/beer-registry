@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Beer, BeerNote } from '../types/beer';
+import { Beer, BeerNote, DateOrTimestamp } from '../types/beer';
 import { BeerNotes } from './BeerNotes';
 
 interface BeerCardProps {
@@ -9,13 +9,21 @@ interface BeerCardProps {
   onAddNote: (beerId: string, note: Omit<BeerNote, 'id'>) => void;
 }
 
+const getDateFromValue = (value: DateOrTimestamp): Date => {
+  return value instanceof Date ? value : value.toDate();
+};
+
+const formatDate = (date: DateOrTimestamp): string => {
+  return getDateFromValue(date).toLocaleDateString();
+};
+
 export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
   
   const daysInProduction = beer.status === 'Ready' && beer.completionDate
-    ? Math.ceil((beer.completionDate.getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24))
-    : Math.ceil((new Date().getTime() - beer.brewDate.getTime()) / (1000 * 3600 * 24));
+    ? Math.ceil((getDateFromValue(beer.completionDate).getTime() - getDateFromValue(beer.brewDate).getTime()) / (1000 * 3600 * 24))
+    : Math.ceil((new Date().getTime() - getDateFromValue(beer.brewDate).getTime()) / (1000 * 3600 * 24));
 
   const productionTimeText = beer.status === 'Ready' 
     ? `Produksjonstid: ${daysInProduction} dager` 
@@ -43,14 +51,19 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
         <p className="text-sm font-medium text-gray-700">ABV: {beer.abv.toFixed(1)}%</p>
         <p className="text-sm text-gray-600">Batch Size: {beer.batchSize}L</p>
         <p className="text-sm text-gray-600">
-          Brew Date: {beer.brewDate.toLocaleDateString()}
+          Brew Date: {formatDate(beer.brewDate)}
         </p>
         <p className="text-sm text-gray-600">
           {productionTimeText}
         </p>
         {beer.completionDate && (
           <p className="text-sm text-gray-600">
-            Ferdig dato: {beer.completionDate.toLocaleDateString()}
+            Ferdig dato: {formatDate(beer.completionDate)}
+          </p>
+        )}
+        {beer.bestBeforeDate && (
+          <p className="text-sm text-gray-600">
+            Best før: {formatDate(beer.bestBeforeDate)}
           </p>
         )}
         {beer.description && (
@@ -132,6 +145,28 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
                         <>
                           <span className="mx-2">•</span>
                           <span className="text-gray-500">{hop.supplier}</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Yeast */}
+            {beer.ingredients.yeast && beer.ingredients.yeast.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Gjær</h4>
+                <div className="space-y-2">
+                  {beer.ingredients.yeast.map(y => (
+                    <div key={y.id} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      <span>{y.type}</span>
+                      <span className="mx-2">•</span>
+                      <span>{y.temperature}°C</span>
+                      {y.batchNumber && (
+                        <>
+                          <span className="mx-2">•</span>
+                          <span className="text-gray-500">Sporing #{y.batchNumber}</span>
                         </>
                       )}
                     </div>

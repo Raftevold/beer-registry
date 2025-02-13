@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Beer, Division, calculateABV, MaltIngredient, HopIngredient } from '../types/beer'
+import { Beer, Division, calculateABV, MaltIngredient, HopIngredient, YeastIngredient } from '../types/beer'
 import { IngredientForm } from './IngredientForm'
 
 interface BeerFormProps {
@@ -17,6 +17,7 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
     finalGravity: 1.010,
     brewDate: new Date().toISOString().split('T')[0],
     completionDate: '',
+    bestBeforeDate: '',
     description: '',
     batchSize: 20,
     status: 'Planning' as Beer['status']
@@ -24,24 +25,37 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
 
   const [malts, setMalts] = useState<MaltIngredient[]>([]);
   const [hops, setHops] = useState<HopIngredient[]>([]);
+  const [yeast, setYeast] = useState<YeastIngredient[]>([]);
 
   useEffect(() => {
     if (initialBeer) {
+      const getBestBeforeDate = (date: Date | { toDate(): Date } | undefined) => {
+        if (!date) return '';
+        try {
+          const dateObj = date instanceof Date ? date : date.toDate();
+          return dateObj.toISOString().split('T')[0];
+        } catch {
+          return '';
+        }
+      };
+
       setFormData({
         name: initialBeer.name,
         style: initialBeer.style,
         originalGravity: initialBeer.originalGravity,
         finalGravity: initialBeer.finalGravity,
-        brewDate: new Date(initialBeer.brewDate).toISOString().split('T')[0],
+        brewDate: getBestBeforeDate(initialBeer.brewDate),
         completionDate: initialBeer.completionDate 
-          ? new Date(initialBeer.completionDate).toISOString().split('T')[0]
+          ? getBestBeforeDate(initialBeer.completionDate)
           : '',
+        bestBeforeDate: getBestBeforeDate(initialBeer.bestBeforeDate),
         description: initialBeer.description || '',
         batchSize: initialBeer.batchSize,
         status: initialBeer.status
       });
       setMalts(initialBeer.ingredients.malts);
       setHops(initialBeer.ingredients.hops);
+      setYeast(initialBeer.ingredients.yeast || []);
     }
   }, [initialBeer]);
 
@@ -59,11 +73,13 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
       abv,
       brewDate: new Date(formData.brewDate),
       completionDate,
+      bestBeforeDate: formData.bestBeforeDate ? new Date(formData.bestBeforeDate) : undefined,
       division,
       notes: initialBeer?.notes || [],
       ingredients: {
         malts,
-        hops
+        hops,
+        yeast
       }
     });
   };
@@ -160,7 +176,7 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
             required
             value={formData.brewDate}
             onChange={(e) => setFormData(prev => ({ ...prev, brewDate: e.target.value }))}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 [color-scheme:light]"
           />
         </div>
 
@@ -190,7 +206,7 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
               type="date"
               value={formData.completionDate}
               onChange={(e) => setFormData(prev => ({ ...prev, completionDate: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 [color-scheme:light]"
               max={new Date().toISOString().split('T')[0]}
             />
             <p className="mt-1 text-sm text-gray-500">
@@ -198,6 +214,19 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
             </p>
           </div>
         )}
+
+        <div>
+          <label htmlFor="best-before-date" className="block text-sm font-medium text-gray-700">Best før dato</label>
+          <input
+            id="best-before-date"
+            name="best-before-date"
+            type="date"
+            value={formData.bestBeforeDate}
+            onChange={(e) => setFormData(prev => ({ ...prev, bestBeforeDate: e.target.value }))}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 [color-scheme:light]"
+            min={formData.completionDate || undefined}
+          />
+        </div>
 
         <div>
           <label htmlFor="beer-description" className="block text-sm font-medium text-gray-700">Beskrivelse</label>
@@ -218,8 +247,10 @@ export function BeerForm({ onSubmit, onCancel, initialBeer, division }: BeerForm
         <IngredientForm
           malts={malts}
           hops={hops}
+          yeast={yeast}
           onUpdateMalts={setMalts}
           onUpdateHops={setHops}
+          onUpdateYeast={setYeast}
         />
       </div>
 
