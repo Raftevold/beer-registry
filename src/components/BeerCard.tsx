@@ -20,6 +20,7 @@ const formatDate = (date: DateOrTimestamp): string => {
 export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const daysInProduction = beer.status === 'Ready' && beer.completionDate
     ? Math.ceil((getDateFromValue(beer.completionDate).getTime() - getDateFromValue(beer.brewDate).getTime()) / (1000 * 3600 * 24))
@@ -80,7 +81,7 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
             Edit
           </button>
           <button
-            onClick={() => onDelete(beer.id)}
+            onClick={() => setShowDeleteConfirm(true)}
             className="text-sm px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100"
           >
             Delete
@@ -98,6 +99,35 @@ export function BeerCard({ beer, onEdit, onDelete, onAddNote }: BeerCardProps) {
             {showIngredients ? 'Hide Ingredients' : 'Show Ingredients'}
           </button>
         </div>
+
+        {/* Delete confirmation dialog */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Bekreft sletting</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Er du sikker på at du vil slette "{beer.name}"? Dette kan ikke angres.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={() => {
+                    onDelete(beer.id);
+                    setShowDeleteConfirm(false);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+                >
+                  Slett
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showIngredients && (
           <div className="space-y-4">

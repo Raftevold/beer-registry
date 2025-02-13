@@ -23,6 +23,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<Beer['status'] | 'All'>('All')
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const beersPerPage = 6;
 
   useEffect(() => {
     const loadBeers = async () => {
@@ -56,6 +58,17 @@ function App() {
     )
     .filter(beer => filterStatus === 'All' ? true : beer.status === filterStatus)
     .sort((a, b) => b.brewDate.getTime() - a.brewDate.getTime())
+
+  const pageCount = Math.ceil(filteredBeers.length / beersPerPage);
+  const paginatedBeers = filteredBeers.slice(
+    (currentPage - 1) * beersPerPage,
+    currentPage * beersPerPage
+  );
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, selectedDivision]);
 
   const handleAddNote = async (beerId: string, note: Omit<BeerNote, 'id'>) => {
     const beerRef = doc(db, 'beers', beerId);
@@ -236,20 +249,61 @@ function App() {
                 {filteredBeers.length === 0 ? (
                   <p className="text-gray-500">Ingen brygg registrert ennå.</p>
                 ) : (
-                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredBeers.map(beer => (
-                      <BeerCard
-                        key={beer.id}
-                        beer={beer}
-                        onEdit={(beer) => {
-                          setEditingBeer(beer)
-                          setIsFormOpen(true)
-                        }}
-                        onDelete={handleDeleteBeer}
-                        onAddNote={handleAddNote}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {paginatedBeers.map(beer => (
+                        <BeerCard
+                          key={beer.id}
+                          beer={beer}
+                          onEdit={(beer) => {
+                            setEditingBeer(beer)
+                            setIsFormOpen(true)
+                          }}
+                          onDelete={handleDeleteBeer}
+                          onAddNote={handleAddNote}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {pageCount > 1 && (
+                      <div className="mt-6 flex justify-center space-x-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 
+                                   hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Forrige
+                        </button>
+                        
+                        <div className="flex space-x-1">
+                          {Array.from({ length: pageCount }, (_, i) => i + 1).map(pageNum => (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 py-1 rounded-md text-sm font-medium ${
+                                currentPage === pageNum
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(pageCount, prev + 1))}
+                          disabled={currentPage === pageCount}
+                          className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 
+                                   hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Neste
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
