@@ -1,6 +1,7 @@
 // Define a type for Firestore Timestamp-like objects
 export type TimestampLike = {
-  toDate(): Date;
+    toDate(): Date;
+    getTime(): number;
 };
 
 export type DateOrTimestamp = Date | TimestampLike;
@@ -47,9 +48,12 @@ export interface HopIngredient {
 
 export interface YeastIngredient {
     id: string;
-    type: string;          // gjærtype
-    temperature: number;    // gjøringstemperatur
-    batchNumber?: string;  // sporing
+    name?: string;
+    amount: number; // in grams or packets
+    type?: string; // dry or liquid
+    temperature?: number; // optimal fermentation temperature in Celsius
+    batchNumber?: string;
+    supplier?: string;
 }
 
 export interface BeerNote {

@@ -81,8 +81,8 @@ function App() {
     const beersCollection = collection(db, 'beers');
     const docRef = await addDoc(beersCollection, {
       ...beerData,
-      brewDate: Timestamp.fromDate(beerData.brewDate),
-      completionDate: beerData.completionDate ? Timestamp.fromDate(beerData.completionDate) : null,
+      brewDate: Timestamp.fromDate(beerData.brewDate instanceof Date ? beerData.brewDate : beerData.brewDate.toDate()),
+      completionDate: beerData.completionDate ? Timestamp.fromDate(beerData.completionDate instanceof Date ? beerData.completionDate : beerData.completionDate.toDate()) : null,
       notes: []
     });
     const newBeer = {
@@ -101,8 +101,8 @@ function App() {
     // Convert dates to Firestore Timestamps
     const updateData = {
       ...beerData,
-      brewDate: Timestamp.fromDate(beerData.brewDate),
-      completionDate: beerData.completionDate ? Timestamp.fromDate(beerData.completionDate) : null
+      brewDate: Timestamp.fromDate(beerData.brewDate instanceof Date ? beerData.brewDate : beerData.brewDate.toDate()),
+      completionDate: beerData.completionDate ? Timestamp.fromDate(beerData.completionDate instanceof Date ? beerData.completionDate : beerData.completionDate.toDate()) : null
     };
     
     await updateDoc(beerRef, updateData);

@@ -28,8 +28,10 @@ export function IngredientForm({ malts, hops, yeast, onUpdateMalts, onUpdateHops
   });
 
   const [newYeast, setNewYeast] = useState<Omit<YeastIngredient, 'id'>>({
+    name: '',
+    amount: 0,
     type: '',
-    temperature: undefined as unknown as number,
+    temperature: 0,
     batchNumber: ''
   });
 
@@ -54,9 +56,9 @@ export function IngredientForm({ malts, hops, yeast, onUpdateMalts, onUpdateHops
 
   const handleAddYeast = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!newYeast.type || newYeast.temperature === undefined) return;
+    if (!newYeast.type) return;
     onUpdateYeast([...yeast, { ...newYeast, id: Date.now().toString() }]);
-    setNewYeast({ type: '', temperature: undefined as unknown as number, batchNumber: '' });
+    setNewYeast({ name: '', amount: 0, type: '', temperature: 0, batchNumber: '' });
   };
 
   const handleRemoveMalt = (id: string) => {
